@@ -1,0 +1,55 @@
+
+#floatingElement {
+    position: absolute;
+    z-index: 999;
+    display: none;
+}
+
+/* #hiddenElement {
+    display: inline-block;
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    visibility: hidden;
+} */
+
+#selectionBox {
+    border: 1px solid black;
+    background-color: white;
+    padding: 2px;
+    border-radius: 5px;
+    /* box-sizing: border-box; */
+    /* overflow: auto; */; 
+}
+#selectionBox:focus {
+    outline: none;
+}
+
+#selectionBox::-webkit-scrollbar {
+    width: 3px; /* Set the width of the scrollbar */
+    border-radius: 8px;
+    background-color: darkgray;
+    height: 80%;
+}
+
+/* Track styles */
+#selectionBox::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Color of the track */
+}
+
+/* Handle styles */
+#selectionBox::-webkit-scrollbar-thumb {
+    background: #585858; /* Color of the scrollbar handle */
+    height: 5px;
+    border-radius: 8px;
+}
+
+#selectionBox option {
+    /* padding: 2px; */
+    border-radius: 5px;
+}
+
+#selectionBox option:checked {
+    background-color: #b91d1d;
+    color: white;
+}

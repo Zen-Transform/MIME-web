@@ -1,0 +1,33 @@
+{
+    "manifest_version": 3,
+    "name": "PolyKey-Web",
+    "version": "1.0",
+    "description": "A Chrome extension version for Multilingual IME",
+    "permissions": ["storage", "activeTab", "scripting"],
+    "host_permissions": [
+        "https://*/*"
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "48": "images/try.png"
+        }
+    },
+    "content_scripts": [{
+        "matches": ["<all_urls>"],
+        "css": ["content.css"],
+        "js": ["content.js"]  
+    }],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "icons": {
+        "48": "images/try.png"
+    },
+    "web_accessible_resources": [{
+        "resources": [  "src/*"
+                    ],
+        "matches": ["*://*/*"],
+        "extension_ids": ["*"]
+    }]
+}

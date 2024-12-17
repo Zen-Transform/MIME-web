@@ -1,0 +1,14 @@
+// {
+//   "compilerOptions": {
+//     "checkJs": true,
+//     "allowJs": true,
+//     "target": "es6",
+//     "lib": ["dom", "es6"],
+//     "typeRoots": [
+//       "./node_modules/@types"
+//     ]
+//   },
+//   "include": [
+//     "**/*.js"
+//   ]
+// }

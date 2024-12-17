@@ -1,0 +1,29 @@
+.custom-textarea {
+    border: 1px solid #ccc;
+    padding: 10px;
+    min-height: 100px;
+    width: 300px;
+    font-family: Arial, sans-serif;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    /* Allow line breaks */
+    text-align: left;
+    /* Right-align the text */
+}
+
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        display: none;
+    }
+}
+
+.disappearing-element {
+    display: inline;
+    animation: fadeOut 2.5s ease-in-out forwards;
+}
