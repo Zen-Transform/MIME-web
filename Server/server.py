@@ -13,7 +13,6 @@ def process_input():
         print("in_key:", key)
         try:
             my_key_event_handler.handle_key(key)
-            my_key_event_handler.slow_handle()
             data = {
                 'in_seletion_mode': my_key_event_handler.in_selection_mode,
                 'composition_string': my_key_event_handler.composition_string,
@@ -28,7 +27,7 @@ def process_input():
             print(e)
             return jsonify({'error': 'Invalid input'})
 
-@app.route('/slow_handle', methods=['GET'])
+@app.route('/slow_handle', methods=['POST'])
 def process_slow_handle():
     my_key_event_handler.slow_handle()
     data = {
