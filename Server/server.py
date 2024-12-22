@@ -8,8 +8,8 @@ my_key_event_handler = KeyEventHandler()
 @app.route('/handle_key', methods=['POST'])
 def process_input():
     while True:
-        data = request.get_json()
-        key = data['key']
+        data:dict = request.get_json()
+        key = data.get('key')
         print("in_key:", key)
         try:
             my_key_event_handler.handle_key(key)
