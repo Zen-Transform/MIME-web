@@ -13,9 +13,7 @@ const CLASS_NAME = "ime-extension";
 
 // HTML strings
 const hidden_div_str = `
-<div id="hiddenDiv", class="${CLASS_NAME}", style="position: absolute; top: 0px; left: 0px">
-</div>
-`;
+<div id="hiddenDiv", class="${CLASS_NAME}", style="position: absolute; top: 0px; left: 0px"></div>`;
 
 const option_string_str = `
 <option value="volvo", style="background-color: grey">Volvo</option>
@@ -23,16 +21,13 @@ const option_string_str = `
 `;
 
 const selection_box_str = `
-<select id="selectionBox", class="${CLASS_NAME}", style="background-color: grey;", style="position: absolute"> ${option_string_str}
-</select>`;
+<select id="selectionBox", class="${CLASS_NAME}", style="background-color: grey;", style="position: absolute">${option_string_str}</select>`;
 
 const floating_element_str = `
-<div id="floatingElement", class="${CLASS_NAME}", style="position: absolute"> ${selection_box_str} 
-</div>`;
+<div id="floatingElement", class="${CLASS_NAME}", style="position: absolute">${selection_box_str}</div>`;
 
 const composition_element_str = `
-<div id="compositionElement", class="${CLASS_NAME}", readonly= "true", style="position: absolute">
-</div>`;
+<span id="compositionElement", class="${CLASS_NAME}", readonly= "true"></span>`;
 
 const parser = new DOMParser();
 const hiddenDivElement = parser.parseFromString(hidden_div_str, "text/html")
@@ -92,22 +87,49 @@ function updateFloatingElement() {
 
 function parseKey(event) {
   const key = event.key;
-  switch (key) {
-    case "Enter":
-      return "enter";
-    case "Backspace":
-      return "backspace";
-    case "ArrowLeft":
-      return "left";
-    case "ArrowRight":
-      return "right";
-    case "ArrowUp":
-      return "up";
-    case "ArrowDown":
-      return "down";
-    default:
-      return key;
+  const CodeMap = {
+    Tab: "tab",
+    Enter: "enter",
+    Backspace: "backspace",
+    ArrowLeft: "left",
+    ArrowRight: "right",
+    ArrowUp: "up",
+    ArrowDown: "down",
+    Comma: ",",
+    Period: ".",
+    Space: " ",
+    Semicolon: ";",
+    Quote: "'",
+    BracketLeft: "[",
+    BracketRight: "]",
+    Backslash: "\\",
+    Equal: "=",
+    Minus: "-",
+    Backquote: "`",
+  };
+  console.log("-----");
+  console.log("event.key: " + event.key);
+  console.log("event.code: " + event.code);
+  console.log("-----");
+
+  let return_key = "";
+  if (event.ctrlKey && event.key !== "Control") {
+    return_key += "©";
   }
+
+  if (key.length === 1) {
+    return_key += key;
+  } else {
+    console.log("Special key: " + event.code);
+    const c_key = CodeMap[event.code];
+    if (c_key !== undefined) {
+      return_key += c_key;
+    } else {
+      console.log("Unknown key: " + key);
+      return_key = undefined;
+    }
+  }
+  return return_key;
 }
 
 async function client_start() {
@@ -187,11 +209,43 @@ function update_ui(data) {
 async function handle_key(key) {
   const data = await client_keydown(key);
   update_ui(data);
+  updateFloatingElement();
 }
 
 async function slow_handle_key(key) {
   const data = await client_keydown_slow(key);
   update_ui(data);
+  updateFloatingElement();
+}
+
+function getCursorPosition(element) {
+  const selection = window.getSelection();
+  let cursor_position = 0;
+
+  if (selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0);
+    const clonedRange = range.cloneRange();
+    clonedRange.selectNodeContents(element);
+    clonedRange.setEnd(range.endContainer, range.endOffset);
+    const cursorPosition = clonedRange.toString().length;
+
+    // If there's a selection, get the start position of the selection
+    if (!selection.isCollapsed) {
+      const selectionStart = range.startOffset;
+      cursor_position = selectionStart;
+    } else {
+      // If no text is selected, show cursor position
+      cursor_position = cursorPosition;
+    }
+  } else {
+    // positionDisplay.textContent = 'No selection available.';
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    range.collapse(false); // Collapse to the end of the contents
+    cursor_position = range.toString().length;
+    console.log("No Cursor, Cursor position: " + cursor_position);
+  }
+  return cursor_position;
 }
 
 let timeoutID = null;
@@ -202,36 +256,61 @@ window.onload = () => {
   );
   for (const contentEditableArea of content_editable_fields) {
     global_contentEditableArea = contentEditableArea;
-    contentEditableArea.addEventListener("focusin", async () => {
-      await client_start();
-      const tempElement = document.createElement("div");
-      tempElement.id = "tempElement";
-      contentEditableArea.appendChild(tempElement);
-      contentEditableArea.replaceChild(compositionElement, tempElement);
+    contentEditableArea.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const cursor_position = getCursorPosition(contentEditableArea);
+      console.log("Selection Start Position: " + cursor_position);
+
+      client_start().then(() => {
+        const tempElement = document.createElement("span");
+        tempElement.id = "tempElement";
+        const originalContent = contentEditableArea.innerText;
+        const updatedContent =
+          originalContent.slice(0, cursor_position) +
+          tempElement.outerHTML +
+          originalContent.slice(cursor_position);
+        contentEditableArea.innerHTML = updatedContent;
+        contentEditableArea.replaceChild(compositionElement, document.getElementById("tempElement"));
+      });
     });
-    contentEditableArea.addEventListener("keydown", async (event) => {
+
+    contentEditableArea.addEventListener("keydown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const key = parseKey(event);
+      console.log(`Key pressed: '${key}'`);
+
+      if (key === undefined) {
+        return;
+      }
+
       if (timeoutID !== null) {
         clearTimeout(timeoutID);
       }
-
-      compositionElement.focus();
-
-      const key = parseKey(event);
-      handle_key(key);
-
-      timeoutID = setTimeout(() => {
-        slow_handle_key(key);
-      }, 300);
-
-      updateFloatingElement();
-      event.stopPropagation();
-      event.preventDefault();
+      handle_key(key).then(() => {
+        timeoutID = setTimeout(() => {
+          slow_handle_key(key).then(() => {
+            timeoutID = null;
+          });
+        }, 300);
+      });
     });
-    contentEditableArea.addEventListener("focusout", async () => {
-      await client_keydown("enter");
-      await client_close();
-      floatingElement.style.display = "none";
-      contentEditableArea.focus();
+
+    contentEditableArea.addEventListener("focusout", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      client_keydown("enter")
+        .then(() => {
+          return client_close();
+        })
+        .then(() => {
+          floatingElement.style.display = "none";
+          compositionElement.innerHTML = "";
+        });
     });
   }
 };
