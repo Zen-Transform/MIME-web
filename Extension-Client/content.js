@@ -172,7 +172,7 @@ function update_ui(data) {
   const in_seletion_mode = data.in_seletion_mode;
   const candidate_list = data.candidate_list;
   const composition_string = data.composition_string;
-  const compostion_index = data.composition_index;
+  const compostion_index = data.cursor_index;
 
   if (composition_string === "") {
     console.log("Commit " + composition_string);
@@ -192,7 +192,7 @@ function update_ui(data) {
     compositionElement.focus();
     compositionElement.innerHTML = composition_string;
     compositionElement.style.textDecoration = "underline";
-    // setCursorPosition(compostion_index);
+    setCompostionCursor(compostion_index);
   }
 }
 
@@ -248,6 +248,16 @@ function setCursorPosition(editableDiv, target_element) {
   range.setStart(target_element, 0);
   range.collapse(true);
 
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function setCompostionCursor(index) {
+  compositionElement.focus();
+  const range = document.createRange();
+  const selection = window.getSelection();
+  range.setStart(compositionElement.childNodes[0], index);
+  range.collapse(true);
   selection.removeAllRanges();
   selection.addRange(range);
 }
