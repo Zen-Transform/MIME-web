@@ -188,21 +188,11 @@ function update_ui(data) {
     } else {
       floatingElement.style.display = "none";
     }
-    function setCursorPosition(index) {
-      const range = document.createRange();
-      const selection = window.getSelection();
-
-      range.setStart(compositionElement.childNodes[0], index);
-      range.collapse(true);
-
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
 
     compositionElement.focus();
     compositionElement.innerHTML = composition_string;
     compositionElement.style.textDecoration = "underline";
-    setCursorPosition(compostion_index);
+    // setCursorPosition(compostion_index);
   }
 }
 
@@ -238,6 +228,7 @@ function getCursorPosition(element) {
       cursor_position = cursorPosition;
     }
   } else {
+    console.log("No cursor selection available.");
     // positionDisplay.textContent = 'No selection available.';
     const range = document.createRange();
     range.selectNodeContents(element);
@@ -246,6 +237,19 @@ function getCursorPosition(element) {
     console.log("No Cursor, Cursor position: " + cursor_position);
   }
   return cursor_position;
+}
+
+function setCursorPosition(editableDiv, target_element) {
+  editableDiv.focus();
+
+  const range = document.createRange();
+  const selection = window.getSelection();
+
+  range.setStart(target_element, 0);
+  range.collapse(true);
+
+  selection.removeAllRanges();
+  selection.addRange(range);
 }
 
 let timeoutID = null;
@@ -261,7 +265,6 @@ window.onload = () => {
       event.stopPropagation();
 
       const cursor_position = getCursorPosition(contentEditableArea);
-      console.log("Selection Start Position: " + cursor_position);
 
       client_start().then(() => {
         const tempElement = document.createElement("span");
@@ -271,8 +274,12 @@ window.onload = () => {
           originalContent.slice(0, cursor_position) +
           tempElement.outerHTML +
           originalContent.slice(cursor_position);
-        contentEditableArea.innerHTML = updatedContent;
-        contentEditableArea.replaceChild(compositionElement, document.getElementById("tempElement"));
+        contentEditableArea.innerHTML = updatedContent; //this cause
+        contentEditableArea.replaceChild(
+          compositionElement,
+          document.getElementById("tempElement")
+        );
+        setCursorPosition(contentEditableArea, compositionElement);
       });
     });
 
