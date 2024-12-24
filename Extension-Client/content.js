@@ -176,9 +176,15 @@ function update_ui(data) {
   const compostion_index = data.cursor_index;
 
   if (composition_string === "") {
-    console.log("Commit " + composition_string);
-    compositionElement.innerHTML = "";
-    compositionElement.style.textDecoration = "none";
+    // commit
+    const commit_string = compositionElement.textContent;
+    compositionElement.textContent = "";
+    console.log("Commit " + commit_string);
+    global_contentEditableArea.focus();
+    global_contentEditableArea.innerHTML =
+      global_contentEditableArea.innerHTML.slice(0, start_cursor_position) +
+      commit_string +
+      global_contentEditableArea.innerHTML.slice(start_cursor_position);
   } else {
     if (in_seletion_mode) {
       floatingElement.style.display = "block";
@@ -264,6 +270,7 @@ function setCompostionCursor(index) {
 }
 
 let timeoutID = null;
+let start_cursor_position = null;
 
 window.onload = () => {
   const content_editable_fields = document.querySelectorAll(
@@ -275,16 +282,20 @@ window.onload = () => {
       event.preventDefault();
       event.stopPropagation();
 
-      const cursor_position = getCursorPosition(contentEditableArea);
+      start_cursor_position = getCursorPosition(contentEditableArea);
+
+      if (compositionElement.innerHTML !== "") {
+        client_keydown("enter");
+      }
 
       client_start().then(() => {
         const tempElement = document.createElement("span");
         tempElement.id = "tempElement";
         const originalContent = contentEditableArea.innerText;
         const updatedContent =
-          originalContent.slice(0, cursor_position) +
+          originalContent.slice(0, start_cursor_position) +
           tempElement.outerHTML +
-          originalContent.slice(cursor_position);
+          originalContent.slice(start_cursor_position);
         contentEditableArea.innerHTML = updatedContent; //this cause
         contentEditableArea.replaceChild(
           compositionElement,
@@ -308,13 +319,19 @@ window.onload = () => {
       if (timeoutID !== null) {
         clearTimeout(timeoutID);
       }
-      handle_key(key).then(() => {
-        timeoutID = setTimeout(() => {
-          slow_handle_key(key).then(() => {
-            timeoutID = null;
-          });
-        }, 300);
-      });
+      const quick_keys = ["up", "down", "left", "right", "tab", "enter"];
+
+      if (quick_keys.includes(key)) {
+        handle_key(key);
+      } else {
+        handle_key(key).then(() => {
+          timeoutID = setTimeout(() => {
+            slow_handle_key(key).then(() => {
+              timeoutID = null;
+            });
+          }, 300);
+        });
+      }
     });
 
     contentEditableArea.addEventListener("focusout", (event) => {
