@@ -133,36 +133,69 @@ function parseKey(event) {
   return key;
 }
 
+const withTimeout = (promise, timeLimit) => {
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error("Operation timed out")), timeLimit)
+  );
+  return Promise.race([promise, timeout]);
+};
+
+const TIME_LIMIT = 500;
+
 async function client_start() {
-  const response = await chrome.runtime.sendMessage({
-    type: "client-start",
-  });
-  console.log(response);
+  try {
+    const response = await withTimeout(
+      chrome.runtime.sendMessage({ type: "client-start" }),
+      TIME_LIMIT
+    );
+    console.log(response);
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function client_close() {
-  const response = await chrome.runtime.sendMessage({
-    type: "client-close",
-  });
-  console.log(response);
+  try {
+    const response = await withTimeout(
+      chrome.runtime.sendMessage({ type: "client-close" }),
+      TIME_LIMIT
+    );
+    console.log(response);
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function client_keydown(key) {
-  const response = await chrome.runtime.sendMessage({
-    type: "client-keydown",
-    key: key,
-  });
-  console.log(response);
-  return response.data;
+  try {
+    const response = await withTimeout(
+      chrome.runtime.sendMessage({
+        type: "client-keydown",
+        key: key,
+      }),
+      TIME_LIMIT
+    );
+    console.log(response);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function client_keydown_slow(key) {
-  const response = await chrome.runtime.sendMessage({
-    type: "client-keydown-slow",
-    key: key,
-  });
-  console.log(response);
-  return response.data;
+  try {
+    const response = await withTimeout(
+      chrome.runtime.sendMessage({
+        type: "client-keydown-slow",
+        key: key,
+      }),
+      TIME_LIMIT
+    );
+    console.log(response);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function update_ui(data) {
@@ -280,25 +313,69 @@ function isContentEditable(element) {
   );
 }
 
+const keydownhandler = (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+
+  const key = parseKey(event);
+  console.log(`Key pressed: '${key}'`);
+
+  if (key === undefined) {
+    return;
+  }
+
+  if (timeoutID !== null) {
+    clearTimeout(timeoutID);
+  }
+  const quick_keys = ["up", "down", "left", "right", "tab", "enter"];
+
+  if (quick_keys.includes(key)) {
+    handle_key(key);
+  } else {
+    handle_key(key).then(() => {
+      timeoutID = setTimeout(() => {
+        slow_handle_key(key).then(() => {
+          timeoutID = null;
+        });
+      }, 300);
+    });
+  }
+};
+
+const focusouthandler = (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+
+  client_keydown("enter")
+    .then(() => {
+      return client_close();
+    })
+    .then(() => {
+      floatingElement.style.display = "none";
+      compositionElement.innerHTML = "";
+    });
+};
+
 window.addEventListener("click", (event) => {
   const clicked_element = event.target;
   if (!isContentEditable(clicked_element)) {
     return;
   }
-
-  const contentEditableElement = clicked_element;
-  global_contentEditableArea = contentEditableElement;
-
   event.preventDefault();
   event.stopPropagation();
 
+  const contentEditableElement = clicked_element;
+  global_contentEditableArea = contentEditableElement;
   start_cursor_position = getCursorPosition(contentEditableElement);
 
-  if (compositionElement.innerHTML !== "") {
-    client_keydown("enter");
-  }
-
-  client_start().then(() => {
+  (async () => {
+    if (compositionElement.innerHTML !== "") {
+      console.log("the composition element is not empty");
+      await handle_key("enter");
+    }
+    await client_start();
+    
+    console.log("move span")
     const tempElement = document.createElement("span");
     tempElement.id = "tempElement";
     const originalContent = contentEditableElement.innerText;
@@ -313,48 +390,8 @@ window.addEventListener("click", (event) => {
     );
     setCursorPosition(contentEditableElement, compositionElement);
     console.log("Start");
-  });
+  })();
 
-  contentEditableElement.addEventListener("keydown", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const key = parseKey(event);
-    console.log(`Key pressed: '${key}'`);
-
-    if (key === undefined) {
-      return;
-    }
-
-    if (timeoutID !== null) {
-      clearTimeout(timeoutID);
-    }
-    const quick_keys = ["up", "down", "left", "right", "tab", "enter"];
-
-    if (quick_keys.includes(key)) {
-      handle_key(key);
-    } else {
-      handle_key(key).then(() => {
-        timeoutID = setTimeout(() => {
-          slow_handle_key(key).then(() => {
-            timeoutID = null;
-          });
-        }, 300);
-      });
-    }
-  });
-
-  contentEditableElement.addEventListener("focusout", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    client_keydown("enter")
-      .then(() => {
-        return client_close();
-      })
-      .then(() => {
-        floatingElement.style.display = "none";
-        compositionElement.innerHTML = "";
-      });
-  });
+  contentEditableElement.addEventListener("keydown", keydownhandler);
+  contentEditableElement.addEventListener("focusout", focusouthandler);
 });
