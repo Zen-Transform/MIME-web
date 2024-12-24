@@ -86,8 +86,7 @@ function updateFloatingElement() {
 }
 
 function parseKey(event) {
-  const key = event.key;
-  const CodeMap = {
+  const SpecialCodeMap = {
     Tab: "tab",
     Enter: "enter",
     Backspace: "backspace",
@@ -95,41 +94,43 @@ function parseKey(event) {
     ArrowRight: "right",
     ArrowUp: "up",
     ArrowDown: "down",
-    Comma: ",",
-    Period: ".",
-    Space: " ",
-    Semicolon: ";",
-    Quote: "'",
+    Escape: "escape",
+  };
+  const CodeMap = {
+    Minus: "-",
+    Equal: "=",
     BracketLeft: "[",
     BracketRight: "]",
     Backslash: "\\",
-    Equal: "=",
-    Minus: "-",
+    Semicolon: ";",
+    Quote: "'",
+    Comma: ",",
+    Period: ".",
+    Slash: "/",
     Backquote: "`",
+    Space: " ",
   };
-  console.log("-----");
-  console.log("event.key: " + event.key);
-  console.log("event.code: " + event.code);
-  console.log("-----");
 
-  let return_key = "";
-  if (event.ctrlKey && event.key !== "Control") {
-    return_key += "©";
-  }
-
-  if (key.length === 1) {
-    return_key += key;
+  let key;
+  if (SpecialCodeMap[event.code] !== undefined) {
+    // is special character
+    key = SpecialCodeMap[event.code];
   } else {
-    console.log("Special key: " + event.code);
-    const c_key = CodeMap[event.code];
-    if (c_key !== undefined) {
-      return_key += c_key;
+    if (event.code.startsWith("Digit") || event.code.startsWith("Key")) {
+      key = event.code.slice(-1).toLowerCase();
+
+      if (event.shiftKey) {
+        key = key.toUpperCase();
+      }
+    } else if (CodeMap[event.code] !== undefined) {
+      key = CodeMap[event.code];
     } else {
-      console.log("Unknown key: " + key);
-      return_key = undefined;
+    }
+    if (event.ctrlKey && key !== undefined) {
+      key = "©" + key;
     }
   }
-  return return_key;
+  return key;
 }
 
 async function client_start() {
