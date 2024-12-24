@@ -272,80 +272,89 @@ function setCompostionCursor(index) {
 let timeoutID = null;
 let start_cursor_position = null;
 
-window.onload = () => {
-  const content_editable_fields = document.querySelectorAll(
-    '[contenteditable="true"]'
+function isContentEditable(element) {
+  return (
+    (element instanceof HTMLDivElement && element.isContentEditable) ||
+    element instanceof HTMLTextAreaElement ||
+    element instanceof HTMLInputElement
   );
-  for (const contentEditableArea of content_editable_fields) {
-    global_contentEditableArea = contentEditableArea;
-    contentEditableArea.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
+}
 
-      start_cursor_position = getCursorPosition(contentEditableArea);
-
-      if (compositionElement.innerHTML !== "") {
-        client_keydown("enter");
-      }
-
-      client_start().then(() => {
-        const tempElement = document.createElement("span");
-        tempElement.id = "tempElement";
-        const originalContent = contentEditableArea.innerText;
-        const updatedContent =
-          originalContent.slice(0, start_cursor_position) +
-          tempElement.outerHTML +
-          originalContent.slice(start_cursor_position);
-        contentEditableArea.innerHTML = updatedContent; //this cause
-        contentEditableArea.replaceChild(
-          compositionElement,
-          document.getElementById("tempElement")
-        );
-        setCursorPosition(contentEditableArea, compositionElement);
-      });
-    });
-
-    contentEditableArea.addEventListener("keydown", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const key = parseKey(event);
-      console.log(`Key pressed: '${key}'`);
-
-      if (key === undefined) {
-        return;
-      }
-
-      if (timeoutID !== null) {
-        clearTimeout(timeoutID);
-      }
-      const quick_keys = ["up", "down", "left", "right", "tab", "enter"];
-
-      if (quick_keys.includes(key)) {
-        handle_key(key);
-      } else {
-        handle_key(key).then(() => {
-          timeoutID = setTimeout(() => {
-            slow_handle_key(key).then(() => {
-              timeoutID = null;
-            });
-          }, 300);
-        });
-      }
-    });
-
-    contentEditableArea.addEventListener("focusout", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      client_keydown("enter")
-        .then(() => {
-          return client_close();
-        })
-        .then(() => {
-          floatingElement.style.display = "none";
-          compositionElement.innerHTML = "";
-        });
-    });
+window.addEventListener("click", (event) => {
+  const clicked_element = event.target;
+  if (!isContentEditable(clicked_element)) {
+    return;
   }
-};
+
+  const contentEditableElement = clicked_element;
+  global_contentEditableArea = contentEditableElement;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  start_cursor_position = getCursorPosition(contentEditableElement);
+
+  if (compositionElement.innerHTML !== "") {
+    client_keydown("enter");
+  }
+
+  client_start().then(() => {
+    const tempElement = document.createElement("span");
+    tempElement.id = "tempElement";
+    const originalContent = contentEditableElement.innerText;
+    const updatedContent =
+      originalContent.slice(0, start_cursor_position) +
+      tempElement.outerHTML +
+      originalContent.slice(start_cursor_position);
+    contentEditableElement.innerHTML = updatedContent; //this cause
+    contentEditableElement.replaceChild(
+      compositionElement,
+      document.getElementById("tempElement")
+    );
+    setCursorPosition(contentEditableElement, compositionElement);
+    console.log("Start");
+  });
+
+  contentEditableElement.addEventListener("keydown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const key = parseKey(event);
+    console.log(`Key pressed: '${key}'`);
+
+    if (key === undefined) {
+      return;
+    }
+
+    if (timeoutID !== null) {
+      clearTimeout(timeoutID);
+    }
+    const quick_keys = ["up", "down", "left", "right", "tab", "enter"];
+
+    if (quick_keys.includes(key)) {
+      handle_key(key);
+    } else {
+      handle_key(key).then(() => {
+        timeoutID = setTimeout(() => {
+          slow_handle_key(key).then(() => {
+            timeoutID = null;
+          });
+        }, 300);
+      });
+    }
+  });
+
+  contentEditableElement.addEventListener("focusout", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    client_keydown("enter")
+      .then(() => {
+        return client_close();
+      })
+      .then(() => {
+        floatingElement.style.display = "none";
+        compositionElement.innerHTML = "";
+      });
+  });
+});
