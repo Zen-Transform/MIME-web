@@ -199,9 +199,10 @@ async function client_keydown_slow(key) {
 }
 
 function update_ui(data) {
-  if (data === null) {
+  if (data === undefined) {
     return;
   }
+  console.log(data)
   const seletion_index = data.selection_index;
   const in_seletion_mode = data.in_seletion_mode;
   const candidate_list = data.candidate_list;
@@ -214,10 +215,11 @@ function update_ui(data) {
     compositionElement.textContent = "";
     console.log("Commit " + commit_string);
     global_contentEditableArea.focus();
-    global_contentEditableArea.innerHTML =
-      global_contentEditableArea.innerHTML.slice(0, start_cursor_position) +
+    global_contentEditableArea.textContent =
+      global_contentEditableArea.textContent.slice(0, start_cursor_position) +
       commit_string +
-      global_contentEditableArea.innerHTML.slice(start_cursor_position);
+      global_contentEditableArea.textContent.slice(start_cursor_position);
+    setMainCompositionCursor(global_contentEditableArea, start_cursor_position + commit_string.length);
   } else {
     if (in_seletion_mode) {
       floatingElement.style.display = "block";
@@ -280,7 +282,8 @@ function getCursorPosition(element) {
 }
 
 function setCursorPosition(editableDiv, target_element) {
-  editableDiv.focus();
+  // editableDiv.focus();
+  target_element.focus();
 
   const range = document.createRange();
   const selection = window.getSelection();
@@ -297,6 +300,16 @@ function setCompostionCursor(index) {
   const range = document.createRange();
   const selection = window.getSelection();
   range.setStart(compositionElement.childNodes[0], index);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function setMainCompositionCursor(editabelDiv, index) {
+  editabelDiv.focus();
+  const range = document.createRange();
+  const selection = window.getSelection();
+  range.setStart(editabelDiv.childNodes[0], index);
   range.collapse(true);
   selection.removeAllRanges();
   selection.addRange(range);
