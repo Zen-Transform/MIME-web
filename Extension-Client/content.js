@@ -202,7 +202,7 @@ function update_ui(data) {
   if (data === undefined) {
     return;
   }
-  console.log(data)
+  console.log(data);
   const seletion_index = data.selection_index;
   const in_seletion_mode = data.in_seletion_mode;
   const candidate_list = data.candidate_list;
@@ -219,7 +219,10 @@ function update_ui(data) {
       global_contentEditableArea.textContent.slice(0, start_cursor_position) +
       commit_string +
       global_contentEditableArea.textContent.slice(start_cursor_position);
-    setMainCompositionCursor(global_contentEditableArea, start_cursor_position + commit_string.length);
+    setMainCompositionCursor(
+      global_contentEditableArea,
+      start_cursor_position + commit_string.length
+    );
   } else {
     if (in_seletion_mode) {
       floatingElement.style.display = "block";
@@ -327,22 +330,28 @@ function isContentEditable(element) {
 }
 
 const keydownhandler = (event) => {
-  event.preventDefault();
-  event.stopPropagation();
-
   const key = parseKey(event);
   console.log(`Key pressed: '${key}'`);
 
+  const functional_keys = ["up", "down", "left", "right", "tab", "enter"];
   if (key === undefined) {
+    // ignore key press that is not supported
     return;
   }
+  if (functional_keys.includes(key) && compositionElement.innerHTML === "") {
+    // ignore functional key press when composition is empty
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  updateFloating
 
   if (timeoutID !== null) {
     clearTimeout(timeoutID);
   }
-  const quick_keys = ["up", "down", "left", "right", "tab", "enter"];
 
-  if (quick_keys.includes(key)) {
+  if (functional_keys.includes(key)) {
     handle_key(key);
   } else {
     handle_key(key).then(() => {
@@ -387,8 +396,6 @@ window.addEventListener("click", (event) => {
       await handle_key("enter");
     }
     await client_start();
-    
-    console.log("move span")
     const tempElement = document.createElement("span");
     tempElement.id = "tempElement";
     const originalContent = contentEditableElement.innerText;
