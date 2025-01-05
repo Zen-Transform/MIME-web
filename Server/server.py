@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from multilingual_ime.muti_ime import KeyEventHandler
+from multilingual_ime.key_event_handler import KeyEventHandler
 
 app = Flask(__name__)
 
