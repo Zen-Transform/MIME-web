@@ -10,7 +10,7 @@
     "action": {
         "default_popup": "popup.html",
         "default_icon": {
-            "48": "images/try.png"
+            "48": "images/polykey-web.png"
         }
     },
     "content_scripts": [{
@@ -22,7 +22,7 @@
         "service_worker": "background.js"
     },
     "icons": {
-        "48": "images/try.png"
+        "48": "images/polykey-web.png"
     },
     "web_accessible_resources": [{
         "resources": [  "src/*"
