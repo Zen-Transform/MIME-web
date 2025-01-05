@@ -30,60 +30,8 @@ const composition_element_str = `
 <span id="compositionElement", class="${CLASS_NAME}", readonly= "true"></span>`;
 
 const parser = new DOMParser();
-const hiddenDivElement = parser.parseFromString(hidden_div_str, "text/html")
-  .body.firstChild;
-document.body.appendChild(hiddenDivElement);
-const floatingElement = parser.parseFromString(
-  floating_element_str,
-  "text/html"
-).body.firstChild;
-document.body.appendChild(floatingElement);
-const compositionElement = parser.parseFromString(
-  composition_element_str,
-  "text/html"
-).body.firstChild;
-document.body.appendChild(compositionElement);
-const SelecionBoxElement = document.getElementById("selectionBox");
-
-/**
- * Update the selection options in the selection box
- * @param {string} candidate_words
- * @returns {void}
- */
-function updateSelectionCandidates(candidate_words) {
-  SelecionBoxElement.innerHTML = "";
-  for (const candidate_word of candidate_words) {
-    const option = document.createElement("option");
-    option.value = candidate_word;
-    option.text = candidate_word;
-    SelecionBoxElement.appendChild(option);
-  }
-}
 
 let global_contentEditableArea = null;
-
-function updateFloatingElement() {
-  const textareaRect = global_contentEditableArea.getBoundingClientRect();
-  const getCaretCoordinates = () => {
-    const text = global_contentEditableArea.textContent.substring(
-      0,
-      global_contentEditableArea.selectionStart
-    );
-    hiddenDivElement.textContent = text;
-    const rect = hiddenDivElement.getBoundingClientRect();
-    return {
-      top: rect.height,
-      left: rect.width,
-    };
-  };
-  const cursorPosition = getCaretCoordinates();
-
-  const top = textareaRect.top + window.scrollY + cursorPosition.top + 20; // Adjust top position as needed
-  const left = textareaRect.left + window.scrollX + cursorPosition.left; // Adjust left position as needed
-
-  floatingElement.style.top = top + "px";
-  floatingElement.style.left = left + "px";
-}
 
 function parseKey(event) {
   const SpecialCodeMap = {
@@ -198,61 +146,6 @@ async function client_keydown_slow(key) {
   }
 }
 
-function update_ui(data) {
-  if (data === undefined) {
-    return;
-  }
-  console.log(data);
-  const seletion_index = data.selection_index;
-  const in_seletion_mode = data.in_seletion_mode;
-  const candidate_list = data.candidate_list;
-  const composition_string = data.composition_string;
-  const compostion_index = data.cursor_index;
-
-  if (composition_string === "") {
-    // commit
-    const commit_string = compositionElement.textContent;
-    compositionElement.textContent = "";
-    console.log("Commit " + commit_string);
-    global_contentEditableArea.focus();
-    global_contentEditableArea.textContent =
-      global_contentEditableArea.textContent.slice(0, start_cursor_position) +
-      commit_string +
-      global_contentEditableArea.textContent.slice(start_cursor_position);
-    setMainCompositionCursor(
-      global_contentEditableArea,
-      start_cursor_position + commit_string.length
-    );
-  } else {
-    if (in_seletion_mode) {
-      floatingElement.style.display = "block";
-      SelecionBoxElement.size = candidate_list.length;
-      updateSelectionCandidates(candidate_list);
-      SelecionBoxElement.options[seletion_index].selected = true;
-      updateFloatingElement();
-    } else {
-      floatingElement.style.display = "none";
-    }
-
-    compositionElement.focus();
-    compositionElement.innerHTML = composition_string;
-    compositionElement.style.textDecoration = "underline";
-    setCompostionCursor(compostion_index);
-  }
-}
-
-async function handle_key(key) {
-  const data = await client_keydown(key);
-  update_ui(data);
-  updateFloatingElement();
-}
-
-async function slow_handle_key(key) {
-  const data = await client_keydown_slow(key);
-  update_ui(data);
-  updateFloatingElement();
-}
-
 function getCursorPosition(element) {
   const selection = window.getSelection();
   let cursor_position = 0;
@@ -298,28 +191,15 @@ function setCursorPosition(editableDiv, target_element) {
   selection.addRange(range);
 }
 
-function setCompostionCursor(index) {
-  compositionElement.focus();
+function setCursorPositionIndex(editableDiv, index) {
+  editableDiv.focus();
   const range = document.createRange();
   const selection = window.getSelection();
-  range.setStart(compositionElement.childNodes[0], index);
+  range.setStart(editableDiv.childNodes[0], index);
   range.collapse(true);
   selection.removeAllRanges();
   selection.addRange(range);
 }
-
-function setMainCompositionCursor(editabelDiv, index) {
-  editabelDiv.focus();
-  const range = document.createRange();
-  const selection = window.getSelection();
-  range.setStart(editabelDiv.childNodes[0], index);
-  range.collapse(true);
-  selection.removeAllRanges();
-  selection.addRange(range);
-}
-
-let timeoutID = null;
-let start_cursor_position = null;
 
 function isContentEditable(element) {
   return (
@@ -329,53 +209,286 @@ function isContentEditable(element) {
   );
 }
 
+class TypingHandler {
+  constructor() {
+    this.IN_TYPING_MODE = false;
+    this.compostionElement = new CompostionElement();
+    this.floatingElement = new FloatingElement();
+    this.pre_composition_string = "";
+    this.timeoutID = null;
+
+    this.start_cursor_position = null;
+  }
+  async handle_key(key) {
+    const data = await client_keydown(key);
+    this.update_ui(data);
+  }
+
+  async slow_handle_key(key) {
+    const data = await client_keydown_slow(key);
+    this.update_ui(data);
+  }
+
+  handleKeyEvent(event) {
+    const key = parseKey(event);
+    console.log(`Key pressed: '${key}'`);
+
+    const functional_keys = ["up", "down", "left", "right", "tab", "enter"];
+    if (key === undefined) {
+      // ignore key press that is not supported
+      return false;
+    }
+    if (functional_keys.includes(key) && !this.IN_TYPING_MODE) {
+      // ignore functional key press when composition is empty
+      return false;
+    }
+
+    if (!this.IN_TYPING_MODE) {
+      this.openTypingMode();
+    }
+
+    (async () => {
+      if (functional_keys.includes(key)) {
+        await this.handle_key(key);
+      } else {
+        if (this.timeoutID !== null) {
+          clearTimeout(this.timeoutID);
+        }
+        await this.handle_key(key);
+        this.timeoutID = setTimeout(() => {
+          this.slow_handle_key(key).then(() => {
+            this.timeoutID = null;
+          });
+        }, 300);
+      }
+    })();
+    return true;
+  }
+
+  update_ui(data) {
+    if (data === undefined) {
+      return;
+    }
+    // console.log(data);
+    const seletion_index = data.selection_index;
+    const in_seletion_mode = data.in_seletion_mode;
+    const candidate_list = data.candidate_list;
+    const composition_string = data.composition_string;
+    const compostion_index = data.cursor_index;
+
+    if (composition_string === "") {
+      // commit
+      this.compostionElement.setCommitString(
+        this.pre_composition_string,
+        this.start_cursor_position
+      );
+      this.IN_TYPING_MODE = false;
+    } else {
+      if (in_seletion_mode) {
+        this.floatingElement.openSelectionBox();
+        this.floatingElement.updateSelectionCandidates(candidate_list);
+        this.floatingElement.updateSelectedIndex(seletion_index);
+        this.floatingElement.updateFloatingElementLocation();
+      } else {
+        this.floatingElement.closeSelectionBox();
+      }
+
+      this.compostionElement.setCompostionString(composition_string);
+      this.compostionElement.setCompostionCursor(compostion_index);
+    }
+
+    this.pre_composition_string = composition_string;
+  }
+
+  openTypingMode() {
+    const this_typingHandler = this;
+
+    if (this.IN_TYPING_MODE) {
+      console.log("Already in typing mode, Close the previous typing mode");
+      this.closeTypingMode();
+    }
+    (async () => {
+      await client_start();
+    })();
+    this_typingHandler.compostionElement.updateCompostionLocation();
+
+    this.IN_TYPING_MODE = true;
+    console.log("Open typing mode");
+  }
+
+  closeTypingMode() {
+    (async () => {
+      await client_keydown("enter");
+      await client_close();
+    })();
+
+    this.compostionElement.setCommitString(this.pre_composition_string);
+    this.compostionElement.setCompostionString("");
+    this.floatingElement.closeSelectionBox();
+
+    this.IN_TYPING_MODE = false;
+    console.log("Close typing mode");
+  }
+}
+
+class CompostionElement {
+  constructor() {
+    this.compositionHTMLElement = parser.parseFromString(
+      composition_element_str,
+      "text/html"
+    ).body.firstChild;
+    document.body.appendChild(this.compositionHTMLElement);
+    this.start_cursor_position = null;
+  }
+
+  setCursorPosition(index) {
+    this.compositionHTMLElement.focus();
+    const range = document.createRange();
+    const selection = window.getSelection();
+    range.setStart(this.compositionHTMLElement.childNodes[0], index);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  setCompostionCursor(index) {
+    this.compositionHTMLElement.focus();
+    const range = document.createRange();
+    const selection = window.getSelection();
+    range.setStart(this.compositionHTMLElement.childNodes[0], index);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  setCompostionString(composition_string) {
+    this.compositionHTMLElement.focus();
+    this.compositionHTMLElement.innerHTML = composition_string;
+    this.compositionHTMLElement.style.textDecoration = "underline";
+  }
+
+  setCommitString(commit_string) {
+    this.compositionHTMLElement.textContent = "";
+    console.log("Commit " + commit_string);
+
+    global_contentEditableArea.focus();
+    global_contentEditableArea.textContent =
+      global_contentEditableArea.textContent.slice(
+        0,
+        this.start_cursor_position
+      ) +
+      commit_string +
+      global_contentEditableArea.textContent.slice(this.start_cursor_position);
+    setCursorPositionIndex(
+      global_contentEditableArea,
+      this.start_cursor_position + commit_string.length
+    );
+  }
+
+  updateCompostionLocation() {
+    this.start_cursor_position = getCursorPosition(global_contentEditableArea);
+    const tempElement = document.createElement("span");
+    tempElement.id = "tempElement";
+    const originalContent = global_contentEditableArea.textContent;
+
+    const updatedContent =
+      originalContent.slice(0, this.start_cursor_position) +
+      tempElement.outerHTML +
+      originalContent.slice(this.start_cursor_position);
+    global_contentEditableArea.innerHTML = updatedContent; //this cause
+    global_contentEditableArea.replaceChild(
+      this.compositionHTMLElement,
+      document.getElementById("tempElement")
+    );
+    setCursorPosition(global_contentEditableArea, this.compositionHTMLElement);
+    console.log("Start");
+  }
+}
+
+class FloatingElement {
+  constructor() {
+    this.floatingHTMLElement = parser.parseFromString(
+      floating_element_str,
+      "text/html"
+    ).body.firstChild;
+    this.hiddenDivHTMLElement = parser.parseFromString(
+      hidden_div_str,
+      "text/html"
+    ).body.firstChild;
+
+    document.body.appendChild(this.hiddenDivHTMLElement);
+    document.body.appendChild(this.floatingHTMLElement);
+    this.SelecionBoxHTMLElement = document.getElementById("selectionBox");
+    this.SelecionBoxHTMLElement.size = 5;
+  }
+
+  openSelectionBox() {
+    this.floatingHTMLElement.style.display = "block";
+  }
+
+  closeSelectionBox() {
+    this.floatingHTMLElement.style.display = "none";
+  }
+
+  /**
+   * Update the selection options in the selection box
+   * @param {string} candidate_words
+   * @returns {void}
+   */
+  updateSelectionCandidates(candidate_words) {
+    this.SelecionBoxHTMLElement.innerHTML = "";
+    for (const candidate_word of candidate_words) {
+      const option = document.createElement("option");
+      option.value = candidate_word;
+      option.text = candidate_word;
+      this.SelecionBoxHTMLElement.appendChild(option);
+    }
+  }
+
+  updateSelectedIndex(index) {
+    this.SelecionBoxHTMLElement.options[index].selected = true;
+  }
+
+  updateFloatingElementLocation() {
+    const textareaRect = global_contentEditableArea.getBoundingClientRect();
+    const getCaretCoordinates = () => {
+      const text = global_contentEditableArea.textContent.substring(
+        0,
+        global_contentEditableArea.selectionStart
+      );
+      this.hiddenDivHTMLElement.textContent = text;
+      const rect = this.hiddenDivHTMLElement.getBoundingClientRect();
+      return {
+        top: rect.height,
+        left: rect.width,
+      };
+    };
+    const cursorPosition = getCaretCoordinates();
+
+    const top = textareaRect.top + window.scrollY + cursorPosition.top + 20; // Adjust top position as needed
+    const left = textareaRect.left + window.scrollX + cursorPosition.left; // Adjust left position as needed
+
+    this.floatingHTMLElement.style.top = top + "px";
+    this.floatingHTMLElement.style.left = left + "px";
+  }
+}
+
+const typing_handler = new TypingHandler();
+
 const keydownhandler = (event) => {
-  const key = parseKey(event);
-  console.log(`Key pressed: '${key}'`);
-
-  const functional_keys = ["up", "down", "left", "right", "tab", "enter"];
-  if (key === undefined) {
-    // ignore key press that is not supported
-    return;
-  }
-  if (functional_keys.includes(key) && compositionElement.innerHTML === "") {
-    // ignore functional key press when composition is empty
-    return;
-  }
-
-  event.preventDefault();
-  event.stopPropagation();
-  updateFloating
-
-  if (timeoutID !== null) {
-    clearTimeout(timeoutID);
-  }
-
-  if (functional_keys.includes(key)) {
-    handle_key(key);
+  const handled = typing_handler.handleKeyEvent(event);
+  if (handled) {
+    event.preventDefault();
+    event.stopPropagation();
   } else {
-    handle_key(key).then(() => {
-      timeoutID = setTimeout(() => {
-        slow_handle_key(key).then(() => {
-          timeoutID = null;
-        });
-      }, 300);
-    });
+    return;
   }
 };
 
 const focusouthandler = (event) => {
+  typing_handler.closeTypingMode();
   event.preventDefault();
   event.stopPropagation();
-
-  client_keydown("enter")
-    .then(() => {
-      return client_close();
-    })
-    .then(() => {
-      floatingElement.style.display = "none";
-      compositionElement.innerHTML = "";
-    });
 };
 
 window.addEventListener("click", (event) => {
@@ -383,35 +496,16 @@ window.addEventListener("click", (event) => {
   if (!isContentEditable(clicked_element)) {
     return;
   }
-  event.preventDefault();
-  event.stopPropagation();
+  if (typing_handler.IN_TYPING_MODE) {
+    const cursor_position = getCursorPosition(global_contentEditableArea);
+    console.log("cursor_position: " + cursor_position);
+    typing_handler.closeTypingMode();
+    setCursorPositionIndex(global_contentEditableArea, cursor_position);
+  }
 
-  const contentEditableElement = clicked_element;
-  global_contentEditableArea = contentEditableElement;
-  start_cursor_position = getCursorPosition(contentEditableElement);
+  const contentEditableHTMLElement = clicked_element;
+  global_contentEditableArea = contentEditableHTMLElement;
 
-  (async () => {
-    if (compositionElement.innerHTML !== "") {
-      console.log("the composition element is not empty");
-      await handle_key("enter");
-    }
-    await client_start();
-    const tempElement = document.createElement("span");
-    tempElement.id = "tempElement";
-    const originalContent = contentEditableElement.innerText;
-    const updatedContent =
-      originalContent.slice(0, start_cursor_position) +
-      tempElement.outerHTML +
-      originalContent.slice(start_cursor_position);
-    contentEditableElement.innerHTML = updatedContent; //this cause
-    contentEditableElement.replaceChild(
-      compositionElement,
-      document.getElementById("tempElement")
-    );
-    setCursorPosition(contentEditableElement, compositionElement);
-    console.log("Start");
-  })();
-
-  contentEditableElement.addEventListener("keydown", keydownhandler);
-  contentEditableElement.addEventListener("focusout", focusouthandler);
+  contentEditableHTMLElement.addEventListener("keydown", keydownhandler);
+  contentEditableHTMLElement.addEventListener("focusout", focusouthandler);
 });
