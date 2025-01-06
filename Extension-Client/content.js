@@ -233,7 +233,7 @@ class TypingHandler {
     const key = parseKey(event);
     console.log(`Key pressed: '${key}'`);
 
-    const functional_keys = ["up", "down", "left", "right", "tab", "enter"];
+    const functional_keys = ["up", "down", "left", "right", "tab", "enter", "backspace", "escape"];
     if (key === undefined) {
       // ignore key press that is not supported
       return false;
