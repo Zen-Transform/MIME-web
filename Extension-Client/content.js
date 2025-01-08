@@ -16,12 +16,12 @@ const hidden_div_str = `
 <div id="hiddenDiv", class="${CLASS_NAME}", style="position: absolute; top: 0px; left: 0px"></div>`;
 
 const option_string_str = `
-<option value="volvo", style="background-color: grey">Volvo</option>
-<option value="saab", style="background-color: grey">Saab</option>
+<option value="volvo">Volvo</option>
+<option value="saab"">Saab</option>
 `;
 
 const selection_box_str = `
-<select id="selectionBox", class="${CLASS_NAME}", style="background-color: grey;", style="position: absolute">${option_string_str}</select>`;
+<select id="selectionBox", class="${CLASS_NAME}", style="position: absolute">${option_string_str}</select>`;
 
 const floating_element_str = `
 <div id="floatingElement", class="${CLASS_NAME}", style="position: absolute">${selection_box_str}</div>`;

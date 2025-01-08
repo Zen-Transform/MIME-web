@@ -18,6 +18,7 @@
     background-color: white;
     padding: 2px;
     border-radius: 5px;
+    background-color: #f1f1f1;
     /* box-sizing: border-box; */
     /* overflow: auto; */; 
 }
@@ -30,6 +31,7 @@
     border-radius: 8px;
     background-color: darkgray;
     height: 80%;
+    display: none;
 }
 
 /* Track styles */
@@ -42,14 +44,17 @@
     background: #585858; /* Color of the scrollbar handle */
     height: 5px;
     border-radius: 8px;
+    display: none;
 }
 
 #selectionBox option {
-    /* padding: 2px; */
-    border-radius: 5px;
+    padding: 2px;
+    font-size: large;
+    border-bottom: 2px solid #a09f9f;
 }
 
 #selectionBox option:checked {
-    background-color: #b91d1d;
-    color: white;
+    border-radius: 5px;
+    background-color: #00ff008a;
+    font-weight: bold;
 }
