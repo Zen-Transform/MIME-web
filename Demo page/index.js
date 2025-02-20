@@ -132,7 +132,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     updateSavedResultElement();
     myTextArea.addEventListener('keydown', function (event) {
-        console.log("Input event:", event);
         if (event.code === "Enter") {
             event.stopPropagation();
             event.preventDefault();
@@ -148,7 +147,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const keystroke = codeToEnglish(event.code);
         showKeyStroke(keystroke);
 
-        console.log("REust:", myTextArea.innerHTML, sentences[currentSentence]);
         if (myTextArea.innerHTML === sentences[currentSentence] && event.key === "Enter") {
             updateSentence();
 
@@ -162,8 +160,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     myTextArea.innerHTML = "";
                     return;
                 } else {
-                    console.log("innerText:", myTextArea.innerHTML);
-                    console.log("New sentence");
                     myTextArea.innerHTML = "";
                     currentSentence++;
                     exampleSentence.textContent = sentences[currentSentence];
