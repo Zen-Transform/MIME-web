@@ -16,38 +16,36 @@ document.addEventListener('DOMContentLoaded', function () {
     const shift_count = document.getElementById("shift-count");
     const key_pressed = document.getElementById("key-pressed");
 
+    function readFile (file_name) {
+        let textFile = new XMLHttpRequest();
+        textFile.open("GET", file_name, false);
+        let allText = "";
+        textFile.onreadystatechange = function(){
+            if (textFile.readyState === 4 && textFile.status == 200){
+                allText = textFile.responseText;
+            }
+        }
+        
+        textFile.onerror = function(){
+            console.log("Error: File not found");
+        }
+        
+        textFile.send(null);
 
-    const sentences = [
-        // "維基百科 英語 Wikipedia 是一個自由內容",
-        // "公開編輯且多語言的網絡百科全書協作計劃",
-        // "ASUS Vivobook 16X搭載NVIDIA GeForce RTX 4060",
-        // "筆記型電腦GPU加速創意奔放",
-        // "身兼教授與創作者多重身分",
-        // "劉辰岫博士擁抱AI也善用",
-        // "軟硬體設備展現藝術手法新樣貌",
-        // "透過Wiki技術使得包括您在內的所有人",
-        // "都可以簡單地使用網頁瀏覽器修改其中的內容",
-        // "維基百科的名稱取自於本網站核心技術 Wiki以及具有百科全書之意的 encyclopedia",
-        "共同創造dangerous出來的新混成詞 wikipedia", // 0
-        // "\u5f88\u9ad8\u8208\u8a8d\u8b58\u4f60",
-        // "\u0e22\u0e34\u0e19\u0e14\u0e35\u0e17\u0e35\u0e48\u0e44\u0e14\u0e49\u0e23\u0e49\u0e39\u0e08\u0e31\u0e01",
-        // "R\u1ea5t vui \u0111\u01b0\u1ee3c g\u1eb7pp b\u1ea1n",
-        // "任何使用網路進入維基百科的使用者都可以編寫和修改裡面的文章",
-        // "從編already碼源頭展開實驗性創作 NVIDIA GPU加速生成式AI創意流暢落地",
-        // "近期將Gen AI工具融入創作",
-        // "從程式編碼層次切入",
-        // "選擇在Python TensorFlow程式語言架構",
-        // "餵養大量資料並訓練AI生成不同藝術形式的媒材或風格",
-        // "我們經常會使用深度學習模型VGG-16",
-        // "VGG-19來處理圖像運算",
-        // "過去輸入的圖片動輒10多萬張",
-        // "現在因為有GeForce RTX 40系列GPU",
-        // "可以在三至四個小時內完成",
-        // "與傳統的angry百科全書相比",
-        // "在網際網路上運作的維基百科其文字和絕大部分圖片",
-        // "使用創用CC 姓名標示-相同方式分享 4.0協定和GNU自由檔案授權條款來"
-    ];
-    // const sentences = ['abc',"123"];
+        return allText;
+    }
+
+    const SEC_FIXED_PRECISION = 3
+    const chinese_test_case = readFile("chinese.txt").split("\r\n");
+    const english_test_case = readFile("english.txt").split("\r\n");
+    const mixed_test_case = readFile("mix.txt").split("\r\n");
+
+    let test_mode = "chinese";
+
+    const getRandomNItems = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
+    let sentences = getRandomNItems(chinese_test_case, 10).concat(getRandomNItems(english_test_case, 10)).concat(getRandomNItems(mixed_test_case, 10));
+    sentences = sentences[0]
+    // console.log(sentences);
 
     let startTime;
     let endTime;
@@ -104,11 +102,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     startBtn.addEventListener("click", function () {
-        myTextArea.value = "";
+        myTextArea.innerHTML = "";
         resetCurrentResult();
         resetCurrentResultElement();
         startTime = new Date().getTime();
-        timerInterval = setInterval(() => { endTime = new Date().getTime(); timer.textContent = `${(endTime - startTime) / 1000} seconds`; }, 1);
+        timerInterval = setInterval(() => { endTime = new Date().getTime(); timer.textContent = `${((endTime - startTime) / 1000).toFixed(SEC_FIXED_PRECISION)} seconds`; }, 1);
 
         currentSentence = 0;
         startBtn.disabled = true;
@@ -120,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
     resetBtn.addEventListener("click", function () {
         resetCurrentResult();
         resetCurrentResultElement();
-        myTextArea.value = "";
+        myTextArea.innerHTML = "";
         exampleSentence.textContent = "";
         timer.textContent = "";
         clearInterval(timerInterval);
@@ -136,7 +134,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     updateSavedResultElement();
     myTextArea.addEventListener('keydown', function (event) {
+        console.log("Input event:", event);
         if (event.code === "Enter") {
+            event.stopPropagation();
             event.preventDefault();
         }
         if (event.code === "Backspace") {
@@ -150,8 +150,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const keystroke = codeToEnglish(event.code);
         showKeyStroke(keystroke);
 
-
-        if (myTextArea.value == sentences[currentSentence] && event.key == "Enter") {
+        console.log("REust:", myTextArea.innerHTML, sentences[currentSentence]);
+        if (myTextArea.innerHTML === sentences[currentSentence] && event.key === "Enter") {
             updateSentence();
 
             function updateSentence() {
@@ -161,12 +161,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     exampleSentence.textContent = "You have finished all the sentences! Click the reset button to start again.";
                     startBtn.disabled = false;
                     saveBtn.disabled = false;
-                    myTextArea.value = "";
+                    myTextArea.innerHTML = "";
                     return;
                 } else {
+                    console.log("innerText:", myTextArea.innerHTML);
+                    console.log("New sentence");
+                    myTextArea.innerHTML = "";
                     currentSentence++;
                     exampleSentence.textContent = sentences[currentSentence];
-                    myTextArea.value = "";
                 }
             }
         }
@@ -174,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function updateSavedResultElement() {
-        document.getElementById("save-time-spend").textContent = `${saved_result.time_spend} seconds`;
+        document.getElementById("save-time-spend").textContent = `${saved_result.time_spend.toFixed(SEC_FIXED_PRECISION)} seconds`;
         document.getElementById("save-keystroke-count").textContent = saved_result.keystroke_count;
         document.getElementById("save-backspace-count").textContent = saved_result.backspace_count;
         document.getElementById("save-shift-count").textContent = saved_result.shift_count;
@@ -188,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
         backspace_rate.textContent = current_result.backspace_rate;
         shift_count.textContent = current_result.shift_count;
         shift_rate.textContent = current_result.shift_rate;
-        time_spend.textContent = `${current_result.time_spend} seconds`;
+        time_spend.textContent = `${current_result.time_spend.toFixed(SEC_FIXED_PRECISION)} seconds`;
 
         keystroke_count.style.color = getColor(current_result.keystroke_count, saved_result.keystroke_count);
         backspace_count.style.color = getColor(current_result.backspace_count, saved_result.backspace_count);
