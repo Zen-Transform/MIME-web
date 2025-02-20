@@ -43,9 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let test_mode = "chinese";
 
     const getRandomNItems = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
-    let sentences = getRandomNItems(chinese_test_case, 10).concat(getRandomNItems(english_test_case, 10)).concat(getRandomNItems(mixed_test_case, 10));
-    sentences = sentences[0]
-    // console.log(sentences);
+    const sentences = getRandomNItems(chinese_test_case, 10).concat(getRandomNItems(english_test_case, 10)).concat(getRandomNItems(mixed_test_case, 10));
 
     let startTime;
     let endTime;
