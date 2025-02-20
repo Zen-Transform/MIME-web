@@ -269,7 +269,7 @@ class TypingHandler {
     if (data === undefined) {
       return;
     }
-    // console.log(data);
+    
     const seletion_index = data.selection_index;
     const in_seletion_mode = data.in_seletion_mode;
     const candidate_list = data.candidate_list;
@@ -277,12 +277,7 @@ class TypingHandler {
     const compostion_index = data.cursor_index;
 
     if (composition_string === "") {
-      // commit
-      this.compostionElement.setCommitString(
-        this.pre_composition_string,
-        this.start_cursor_position
-      );
-      this.IN_TYPING_MODE = false;
+      this.closeTypingMode();
     } else {
       if (in_seletion_mode) {
         this.floatingElement.openSelectionBox();
