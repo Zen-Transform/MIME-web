@@ -1,3 +1,4 @@
+import json
 from flask import Flask, request, jsonify
 
 from multilingual_ime.key_event_handler import KeyEventHandler
@@ -5,6 +6,7 @@ from multilingual_ime.key_event_handler import KeyEventHandler
 app = Flask(__name__)
 
 my_key_event_handler = KeyEventHandler(verbose_mode=True)
+
 
 @app.route("/handle_key", methods=["POST"])
 def process_input():
@@ -43,6 +45,20 @@ def process_slow_handle():
     }
 
     return jsonify(data)
+
+
+@app.route("/update_config", methods=["POST"])
+def process_update_config():
+    data: dict = request.get_json()
+    config: dict = data.get("config")
+    my_key_event_handler.set_activation_status(
+        "bopomofo", config.get("bopomofoEnabled")
+    )
+    my_key_event_handler.set_activation_status("english", config.get("englishEnabled"))
+    my_key_event_handler.set_activation_status("cangjie", config.get("cangjieEnabled"))
+    my_key_event_handler.set_activation_status("pinyin", config.get("pinyinEnabled"))
+    print("success update config")
+    return jsonify({"success": "Config Update successfully"})
 
 
 if __name__ == "__main__":
