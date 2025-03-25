@@ -212,7 +212,7 @@ function isContentEditable(element) {
 class TypingHandler {
   constructor() {
     this.IN_TYPING_MODE = false;
-    this.compostionElement = new CompostionElement();
+    this.compositionElement = new CompositionElement();
     this.floatingElement = new FloatingElement();
     this.pre_composition_string = "";
     this.timeoutID = null;
@@ -233,7 +233,16 @@ class TypingHandler {
     const key = parseKey(event);
     console.log(`Key pressed: '${key}'`);
 
-    const functional_keys = ["up", "down", "left", "right", "tab", "enter", "backspace", "escape"];
+    const functional_keys = [
+      "up",
+      "down",
+      "left",
+      "right",
+      "tab",
+      "enter",
+      "backspace",
+      "escape",
+    ];
     if (key === undefined) {
       // ignore key press that is not supported
       return false;
@@ -269,27 +278,27 @@ class TypingHandler {
     if (data === undefined) {
       return;
     }
-    
-    const seletion_index = data.selection_index;
-    const in_seletion_mode = data.in_seletion_mode;
+
+    const selection_index = data.selection_index;
+    const in_selection_mode = data.in_selection_mode;
     const candidate_list = data.candidate_list;
     const composition_string = data.composition_string;
-    const compostion_index = data.cursor_index;
+    const composition_index = data.cursor_index;
 
     if (composition_string === "") {
       this.closeTypingMode();
     } else {
-      if (in_seletion_mode) {
+      if (in_selection_mode) {
         this.floatingElement.openSelectionBox();
         this.floatingElement.updateSelectionCandidates(candidate_list);
-        this.floatingElement.updateSelectedIndex(seletion_index);
+        this.floatingElement.updateSelectedIndex(selection_index);
         this.floatingElement.updateFloatingElementLocation();
       } else {
         this.floatingElement.closeSelectionBox();
       }
 
-      this.compostionElement.setCompostionString(composition_string);
-      this.compostionElement.setCompostionCursor(compostion_index);
+      this.compositionElement.setCompositionString(composition_string);
+      this.compositionElement.setCompostionCursor(composition_index);
     }
 
     this.pre_composition_string = composition_string;
@@ -305,7 +314,7 @@ class TypingHandler {
     (async () => {
       await client_start();
     })();
-    this_typingHandler.compostionElement.updateCompostionLocation();
+    this_typingHandler.compositionElement.updateCompositionLocation();
 
     this.IN_TYPING_MODE = true;
     console.log("Open typing mode");
@@ -317,8 +326,8 @@ class TypingHandler {
       await client_close();
     })();
 
-    this.compostionElement.setCommitString(this.pre_composition_string);
-    this.compostionElement.setCompostionString("");
+    this.compositionElement.setCommitString(this.pre_composition_string);
+    this.compositionElement.setCompositionString("");
     this.floatingElement.closeSelectionBox();
 
     this.IN_TYPING_MODE = false;
@@ -326,7 +335,7 @@ class TypingHandler {
   }
 }
 
-class CompostionElement {
+class CompositionElement {
   constructor() {
     this.compositionHTMLElement = parser.parseFromString(
       composition_element_str,
@@ -356,7 +365,7 @@ class CompostionElement {
     selection.addRange(range);
   }
 
-  setCompostionString(composition_string) {
+  setCompositionString(composition_string) {
     this.compositionHTMLElement.focus();
     this.compositionHTMLElement.innerHTML = composition_string;
     this.compositionHTMLElement.style.textDecoration = "underline";
@@ -380,7 +389,7 @@ class CompostionElement {
     );
   }
 
-  updateCompostionLocation() {
+  updateCompositionLocation() {
     this.start_cursor_position = getCursorPosition(global_contentEditableArea);
     const tempElement = document.createElement("span");
     tempElement.id = "tempElement";
@@ -413,8 +422,8 @@ class FloatingElement {
 
     document.body.appendChild(this.hiddenDivHTMLElement);
     document.body.appendChild(this.floatingHTMLElement);
-    this.SelecionBoxHTMLElement = document.getElementById("selectionBox");
-    this.SelecionBoxHTMLElement.size = 5;
+    this.SelectionBoxHTMLElement = document.getElementById("selectionBox");
+    this.SelectionBoxHTMLElement.size = 5;
   }
 
   openSelectionBox() {
@@ -431,17 +440,17 @@ class FloatingElement {
    * @returns {void}
    */
   updateSelectionCandidates(candidate_words) {
-    this.SelecionBoxHTMLElement.innerHTML = "";
+    this.SelectionBoxHTMLElement.innerHTML = "";
     for (const candidate_word of candidate_words) {
       const option = document.createElement("option");
       option.value = candidate_word;
       option.text = candidate_word;
-      this.SelecionBoxHTMLElement.appendChild(option);
+      this.SelectionBoxHTMLElement.appendChild(option);
     }
   }
 
   updateSelectedIndex(index) {
-    this.SelecionBoxHTMLElement.options[index].selected = true;
+    this.SelectionBoxHTMLElement.options[index].selected = true;
   }
 
   updateFloatingElementLocation() {
@@ -470,7 +479,7 @@ class FloatingElement {
 
 const typing_handler = new TypingHandler();
 
-const keydownhandler = (event) => {
+const keyDownHandler = (event) => {
   const handled = typing_handler.handleKeyEvent(event);
   if (handled) {
     event.preventDefault();
@@ -480,7 +489,7 @@ const keydownhandler = (event) => {
   }
 };
 
-const focusouthandler = (event) => {
+const focusOutHandler = (event) => {
   typing_handler.closeTypingMode();
   event.preventDefault();
   event.stopPropagation();
@@ -501,6 +510,6 @@ window.addEventListener("click", (event) => {
   const contentEditableHTMLElement = clicked_element;
   global_contentEditableArea = contentEditableHTMLElement;
 
-  contentEditableHTMLElement.addEventListener("keydown", keydownhandler);
-  contentEditableHTMLElement.addEventListener("focusout", focusouthandler);
+  contentEditableHTMLElement.addEventListener("keydown", keyDownHandler);
+  contentEditableHTMLElement.addEventListener("focusout", focusOutHandler);
 });
