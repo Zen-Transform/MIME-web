@@ -88,7 +88,7 @@ const withTimeout = (promise, timeLimit) => {
   return Promise.race([promise, timeout]);
 };
 
-const TIME_LIMIT = 500;
+const TIME_LIMIT = 1000;
 
 async function client_start() {
   try {
@@ -130,6 +130,7 @@ async function client_keydown(key) {
   }
 }
 
+// Deprecated
 async function client_keydown_slow(key) {
   try {
     const response = await withTimeout(
@@ -192,6 +193,9 @@ function setCursorPosition(editableDiv, target_element) {
 }
 
 function setCursorPositionIndex(editableDiv, index) {
+  if (!editableDiv) {
+    return;
+  }
   editableDiv.focus();
   const range = document.createRange();
   const selection = window.getSelection();
@@ -221,11 +225,6 @@ class TypingHandler {
   }
   async handle_key(key) {
     const data = await client_keydown(key);
-    this.update_ui(data);
-  }
-
-  async slow_handle_key(key) {
-    const data = await client_keydown_slow(key);
     this.update_ui(data);
   }
 
@@ -260,15 +259,7 @@ class TypingHandler {
       if (functional_keys.includes(key)) {
         await this.handle_key(key);
       } else {
-        if (this.timeoutID !== null) {
-          clearTimeout(this.timeoutID);
-        }
         await this.handle_key(key);
-        this.timeoutID = setTimeout(() => {
-          this.slow_handle_key(key).then(() => {
-            this.timeoutID = null;
-          });
-        }, 300);
       }
     })();
     return true;
@@ -298,7 +289,7 @@ class TypingHandler {
       }
 
       this.compositionElement.setCompositionString(composition_string);
-      this.compositionElement.setCompostionCursor(composition_index);
+      this.compositionElement.setCompositionCursor(composition_index);
     }
 
     this.pre_composition_string = composition_string;
@@ -329,6 +320,7 @@ class TypingHandler {
     this.compositionElement.setCommitString(this.pre_composition_string);
     this.compositionElement.setCompositionString("");
     this.floatingElement.closeSelectionBox();
+    this.pre_composition_string = "";
 
     this.IN_TYPING_MODE = false;
     console.log("Close typing mode");
@@ -355,7 +347,7 @@ class CompositionElement {
     selection.addRange(range);
   }
 
-  setCompostionCursor(index) {
+  setCompositionCursor(index) {
     this.compositionHTMLElement.focus();
     const range = document.createRange();
     const selection = window.getSelection();
