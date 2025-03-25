@@ -1,4 +1,3 @@
-import json
 from flask import Flask, request, jsonify
 
 from multilingual_ime.key_event_handler import KeyEventHandler
@@ -6,6 +5,7 @@ from multilingual_ime.key_event_handler import KeyEventHandler
 app = Flask(__name__)
 
 my_key_event_handler = KeyEventHandler(verbose_mode=True)
+my_key_event_handler.set_activation_status("special", False)
 
 
 @app.route("/handle_key", methods=["POST"])
@@ -16,7 +16,6 @@ def process_input():
         print("in_key:", key)
         try:
             my_key_event_handler.handle_key(key)
-            my_key_event_handler.slow_handle()
             data = {
                 "in_selection_mode": my_key_event_handler.in_selection_mode,
                 "composition_string": my_key_event_handler.composition_string,
@@ -24,8 +23,6 @@ def process_input():
                 "cursor_index": my_key_event_handler.composition_index,
                 "selection_index": my_key_event_handler.selection_index,
             }
-            print(data)
-            print(my_key_event_handler.unfreezed_keystrokes)
 
             return jsonify(data)
         except Exception as e:

@@ -228,6 +228,11 @@ class TypingHandler {
     this.update_ui(data);
   }
 
+  async slow_handle_key(key) {
+    const data = await client_keydown_slow(key);
+    this.update_ui(data);
+  }
+
   handleKeyEvent(event) {
     const key = parseKey(event);
     console.log(`Key pressed: '${key}'`);
@@ -259,7 +264,15 @@ class TypingHandler {
       if (functional_keys.includes(key)) {
         await this.handle_key(key);
       } else {
+        if (this.timeoutID !== null) {
+          clearTimeout(this.timeoutID);
+        }
         await this.handle_key(key);
+        this.timeoutID = setTimeout(() => {
+          this.slow_handle_key(key).then(() => {
+            this.timeoutID = null;
+          });
+        }, 300);
       }
     })();
     return true;
@@ -364,6 +377,9 @@ class CompositionElement {
   }
 
   setCommitString(commit_string) {
+    if (!commit_string) {
+      return;
+    }
     this.compositionHTMLElement.textContent = "";
     console.log("Commit " + commit_string);
 
