@@ -254,7 +254,7 @@ class TypingHandler {
     this.update_ui(data);
   }
 
-  handleKeyEvent(event) {
+  async handleKeyEvent(event) {
     const key = parseKey(event);
     console.log(`Key pressed: '${key}'`);
 
