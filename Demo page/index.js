@@ -43,7 +43,19 @@ document.addEventListener('DOMContentLoaded', function () {
     let test_mode = "chinese";
 
     const getRandomNItems = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
-    const sentences = getRandomNItems(chinese_test_case, 10).concat(getRandomNItems(english_test_case, 10)).concat(getRandomNItems(mixed_test_case, 10));
+    // const sentences = getRandomNItems(chinese_test_case, 10).concat(getRandomNItems(english_test_case, 10)).concat(getRandomNItems(mixed_test_case, 10));
+    const sentences = [
+        "學校將於下月舉辦科技創新競賽",
+        "專家警告海平面上升威脅沿海城市",
+        "The government announced a new tax policy yesterday",
+        "新研究顯示運動對心理健康有益",
+        "Death Valley records hottest summer in history",
+        "當地農產品展銷會吸引眾多消費者參加",
+        "UNESCO recognizes Japanese sake tradition as cultural heritage",
+        "Singapore approves edible insects to enhance food security",
+        "科學家在亞馬遜雨林發現新物種",
+        "The team secured a dramatic victory in the final minutes"
+    ]
 
     let startTime;
     let endTime;
