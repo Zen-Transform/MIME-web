@@ -11,6 +11,18 @@ const ERROR_MESSAGE = "error-message";
 // Constants
 const CLASS_NAME = "ime-extension";
 
+// Keys
+const functional_keys = [
+  "up",
+  "down",
+  "left",
+  "right",
+  "tab",
+  "enter",
+  "backspace",
+  "escape",
+];
+
 // HTML strings
 const hidden_div_str = `
 <div id="hiddenDiv", class="${CLASS_NAME}", style="position: absolute; top: 0px; left: 0px"></div>`;
@@ -213,6 +225,15 @@ function isContentEditable(element) {
   );
 }
 
+async function getExtensionEnabled() {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get(["extensionEnabled"], function (result) {
+      const isEnabled = result.extensionEnabled || false;
+      resolve(isEnabled);
+    });
+  });
+}
+
 class TypingHandler {
   constructor() {
     this.IN_TYPING_MODE = false;
@@ -237,26 +258,14 @@ class TypingHandler {
     const key = parseKey(event);
     console.log(`Key pressed: '${key}'`);
 
-    const functional_keys = [
-      "up",
-      "down",
-      "left",
-      "right",
-      "tab",
-      "enter",
-      "backspace",
-      "escape",
-    ];
-    if (key === undefined) {
-      // ignore key press that is not supported
+    if (!key) {
       return false;
     }
-    if (functional_keys.includes(key) && !this.IN_TYPING_MODE) {
-      // ignore functional key press when composition is empty
-      return false;
-    }
-
-    if (!this.IN_TYPING_MODE) {
+    if (functional_keys.includes(key)) {
+      if (!this.IN_TYPING_MODE) {
+        return false;
+      }
+    } else if (!this.IN_TYPING_MODE) {
       this.openTypingMode();
     }
 
@@ -486,14 +495,19 @@ class FloatingElement {
 }
 
 const typing_handler = new TypingHandler();
+let isExtensionEnabled = false;
+getExtensionEnabled().then((enabled) => (isExtensionEnabled = enabled));
 
 const keyDownHandler = (event) => {
+  if (!isExtensionEnabled) {
+    console.log("Extension is disabled");
+    return false;
+  }
+
   const handled = typing_handler.handleKeyEvent(event);
   if (handled) {
     event.preventDefault();
     event.stopPropagation();
-  } else {
-    return;
   }
 };
 
