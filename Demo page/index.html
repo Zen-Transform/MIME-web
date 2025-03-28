@@ -24,71 +24,60 @@
             <div class="row">
                 <h3 class="col col-auto">Timer :</h3>
                 <h3 class="col col-3" id="timer"></h3>
-                <!-- <h3 class="col col-3">Saved Result</h3> -->
             </div>
-            <div class="row">
+
+            <div class="row mb-3">
                 <div class="col col-6">
+                    <div class="col col-6">
+                        <h4>Current Metrics</h4>
+                    </div>
                     <div class="row">
-                        <text class="col col-5">Time Spend:</text>
-                        <div class="col col-auto" id="time-spend"></div>
+                        <text class="col col-6">Time Spend:</text>
+                        <div class="col col-auto" id="current-time-spend">0</div>
                     </div>
                     <div class="row">
                         <text class="col col-6">Backspace Count:</text>
-                        <div class="col col-auto" id="backspace-count"></div>
+                        <div class="col col-auto" id="current-backspace-count">0</div>
                     </div>
                     <div class="row">
                         <text class="col col-6">Shift Count:</text>
-                        <div class="col col-auto" id="shift-count"></div>
+                        <div class="col col-auto" id="current-shift-count">0</div>
+                    </div>
+                    <div class="row">
+                        <text class="col col-6">Key Stroke Count:</text>
+                        <div class="col col-auto" id="current-keystroke-count">0</div>
                     </div>
                 </div>
                 <div class="col col-6">
-                    <div class="row">
-                        <text class="col col-6">Key Stroke Count:</text>
-                        <div class="col col-auto" id="keystroke-count"></div>
+                    <div class="col col-6">
+                        <h4>Total Metrics</h4>
                     </div>
-                    <div class="row">
-                        <text class="col col-8" style="font-size: 15px;">Backspace Per 100 Words:</text>
-                        <div class="col col-auto" id="backspace-rate"></div>
-                    </div>
-                    <div class="row">
-                        <text class="col col-8" style="font-size: 15px;">Shift Per 100 Words:</text>
-                        <div class="col col-auto" id="shift-rate"></div>
+                    <div class="col col-6">
+                        <div class="row">
+                            <text class="col col-6">Total Time Spend:</text>
+                            <div class="col col-auto" id="total-time-spend">0</div>
+                        </div>
+                        <div class="row">
+                            <text class="col col-6">Total Backspace Count:</text>
+                            <div class="col col-auto" id="total-backspace-count"></div>
+                        </div>
+                        <div class="row">
+                            <text class="col col-6">Total Shift Count:</text>
+                            <div class="col col-auto" id="total-shift-count">0</div>
+                        </div>
+                        <div class="row">
+                            <text class="col col-6">Total Key Stroke Count:</text>
+                            <div class="col col-auto" id="total-keystroke-count">0</div>
+                        </div>
                     </div>
                 </div>
-
-                <div class="col col-6" style="display: none;">
-                    <div class="row">
-                        <h4 class="col col-4">Time Spend:</h4>
-                        <div class="col col-auto" id="save-time-spend"></div>
-                    </div>
-                    <div class="row">
-                        <h4 class="col col-4">Key Stroke Count:</h4>
-                        <div class="col col-auto" id="save-keystroke-count"></div>
-                    </div>
-                    <div class="row">
-                        <h4 class="col col-4">Backspace Count:</h4>
-                        <div class="col col-auto" id="save-backspace-count"></div>
-                    </div>
-                    <div class="row">
-                        <text class="col col-4">Backspace Per 100 Words:</h4>
-                            <div class="col col-auto" id="save-backspace-rate"></div>
-                    </div>
-                    <div class="row">
-                        <h4 class="col col-4">Shift Count:</h4>
-                        <div class="col col-auto" id="save-shift-count"></div>
-                    </div>
-                    <div class="row">
-                        <text class="col col-4">Shift Per 100 Words:</h4>
-                            <div class="col col-auto" id="save-shift-rate"></div>
-                    </div>
+                <div class="col col-6">
                 </div>
             </div>
             <div class="row">
                 <text class="col col-3">Key Pressed:</text>
                 <div class="col col-9" id="key-pressed"></div>
             </div>
-
-
             <div class="from-group">
                 <textarea class="form-control" rows="1" placeholder="Enter your text here" style="visibility: hidden;"
                     disabled></textarea>
@@ -102,20 +91,24 @@
                     disabled></textarea>
             </div>
 
-            <div class="row">
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="alert alert-success" id="test-complete-message" style="display: none;">
+                        All tests completed! Click "Save Results" to download the CSV file.
+                    </div>
+                </div>
             </div>
 
-            <div class="row justify-content-center align-items-center">
+            <div class="row justify-content-center align-items-center mt-3">
                 <button class="btn btn-info col-auto" id="start-btn">Start</button>
                 <button class="btn btn-danger col-auto" id="reset-btn">Reset</button>
-                <button class="btn btn-primary col-auto" id="save-btn">Save</button>
             </div>
 
-            <!-- <div class="row justify-content-center">
-        <p><strong>English Equivalent:</strong> <br><br> <span id="englishEquivalent"></span></p>
-      </div> -->
+            <!-- Hidden div to store test case data -->
+            <div id="test-results-container" style="display: none;"></div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
         crossorigin="anonymous"></script>
