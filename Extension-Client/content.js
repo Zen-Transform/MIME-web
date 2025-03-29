@@ -25,7 +25,7 @@ const functional_keys = [
 
 // HTML strings
 const hidden_div_str = `
-<div id="hiddenDiv", class="${CLASS_NAME}", style="position: absolute; top: 0px; left: 0px"></div>`;
+<div id="hiddenDiv", class="${CLASS_NAME}", style="position: absolute; top: 0px; left: 0px; visibility: hidden;"></div>`;
 
 const option_string_str = `
 <option value="volvo">Volvo</option>
