@@ -6,39 +6,53 @@ app = Flask(__name__)
 
 my_key_event_handler = KeyEventHandler(verbose_mode=True)
 my_key_event_handler.set_activation_status("special", False)
+my_key_event_handler.set_activation_status("japanese", False)
 
 
 @app.route("/handle_key", methods=["POST"])
 def process_input():
-    while True:
-        data: dict = request.get_json()
-        key = data.get("key")
-        print("in_key:", key)
-        try:
-            my_key_event_handler.handle_key(key)
-            data = {
-                "in_selection_mode": my_key_event_handler.in_selection_mode,
-                "composition_string": my_key_event_handler.composition_string,
-                "candidate_list": my_key_event_handler.candidate_word_list,
-                "cursor_index": my_key_event_handler.composition_index,
-                "selection_index": my_key_event_handler.selection_index,
-            }
+    data: dict = request.get_json()
+    key = data.get("key")
+    print("in_key:", key)
+    try:
+        my_key_event_handler.handle_key(key)
 
-            return jsonify(data)
-        except Exception as e:
-            print(e)
-            return jsonify({"error": "Invalid input"})
+        # Convert token index to cursor index
+        total_composition_words = my_key_event_handler.total_composition_words
+        composition_index = my_key_event_handler.composition_index
+        cursor_index = len("".join(total_composition_words[:composition_index]))
+
+        data = {
+            "in_selection_mode": my_key_event_handler.in_selection_mode,
+            "composition_string": my_key_event_handler.composition_string,
+            "candidate_list": my_key_event_handler.candidate_word_list,
+            "cursor_index": cursor_index,
+            "selection_index": my_key_event_handler.selection_index,
+            "commit_string": my_key_event_handler.commit_string,
+        }
+
+        return jsonify(data)
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Invalid input"})
 
 
 @app.route("/slow_handle", methods=["POST"])
 def process_slow_handle():
     my_key_event_handler.slow_handle()
+
+    # Convert token index to cursor index
+    total_composition_words = my_key_event_handler.total_composition_words
+    composition_index = my_key_event_handler.composition_index
+    cursor_index = len("".join(total_composition_words[:composition_index]))
+
     data = {
         "in_selection_mode": my_key_event_handler.in_selection_mode,
         "composition_string": my_key_event_handler.composition_string,
         "candidate_list": my_key_event_handler.candidate_word_list,
-        "cursor_index": my_key_event_handler.composition_index,
+        "cursor_index": cursor_index,
         "selection_index": my_key_event_handler.selection_index,
+        "commit_string": my_key_event_handler.commit_string,
     }
 
     return jsonify(data)

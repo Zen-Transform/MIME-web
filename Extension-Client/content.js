@@ -86,9 +86,9 @@ function parseKey(event) {
       key = CodeMap[event.code];
     } else {
     }
-    if (event.ctrlKey && key !== undefined) {
-      key = "©" + key;
-    }
+    // if (event.ctrlKey && key !== undefined) {
+    //   key = "©" + key;
+    // }
   }
   return key;
 }
@@ -254,7 +254,7 @@ class TypingHandler {
     this.update_ui(data);
   }
 
-  async handleKeyEvent(event) {
+  handleKeyEvent(event) {
     const key = parseKey(event);
     console.log(`Key pressed: '${key}'`);
 
@@ -270,7 +270,8 @@ class TypingHandler {
     }
 
     (async () => {
-      if (functional_keys.includes(key)) {
+      if (functional_keys.includes(key) && key !== "backspace") {
+        // Backspace is functional key, but it is handled with slow_handle_key
         await this.handle_key(key);
       } else {
         if (this.timeoutID !== null) {
@@ -297,8 +298,10 @@ class TypingHandler {
     const candidate_list = data.candidate_list;
     const composition_string = data.composition_string;
     const composition_index = data.cursor_index;
+    const commit_string = data.commit_string;
 
-    if (composition_string === "") {
+    if (commit_string || composition_string === "") {
+      this.pre_composition_string = commit_string;
       this.closeTypingMode();
     } else {
       if (in_selection_mode) {
@@ -524,7 +527,6 @@ window.addEventListener("click", (event) => {
   }
   if (typing_handler.IN_TYPING_MODE) {
     const cursor_position = getCursorPosition(global_contentEditableArea);
-    console.log("cursor_position: " + cursor_position);
     typing_handler.closeTypingMode();
     setCursorPositionIndex(global_contentEditableArea, cursor_position);
   }
