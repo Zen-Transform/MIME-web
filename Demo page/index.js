@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const testSentences = [
     "學校將於下月舉辦科技創新競賽",
     "我今天吃了 pizza 和 sushi",
-    "把學到的知識應用在實際生活中是最重要的 Applying what you've learned is crucial",
+    "把學到的知識應用在實際生活中是最重要的 Applying what you have learned is crucial",
     "你喜歡看 Marvel movies 嗎",
     "明天是我的 day off 我計劃去看一場新上映的 movie",
     "The government announced a new tax policy yesterday",
@@ -290,9 +290,14 @@ document.addEventListener("DOMContentLoaded", function () {
         totalTimeSpend: (CurrentTime - TotalStartTime) / 1000,
         endTime: CurrentTime,
         keys: currentResult.keys.join(""),
+        userInput: myTextArea.innerHTML,
       });
       updateTestSentence();
       resetCurrentResult();
+    }else{
+      console.log(myTextArea.innerHTML);
+      console.log(testSentences[testSentenceIndex]);
+      console.log(myTextArea.querySelector("span").innerHTML);
     }
     updateAllResultElement();
   });

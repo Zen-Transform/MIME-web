@@ -27,3 +27,7 @@
     display: inline;
     animation: fadeOut 2.5s ease-in-out forwards;
 }
+
+#my-textarea{
+    white-space: pre-wrap;
+}

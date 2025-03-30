@@ -386,6 +386,7 @@ class CompositionElement {
     this.compositionHTMLElement.focus();
     this.compositionHTMLElement.innerHTML = composition_string;
     this.compositionHTMLElement.style.textDecoration = "underline";
+    this.compositionHTMLElement.style.whiteSpace = "pre-wrap";
   }
 
   setCommitString(commit_string) {
