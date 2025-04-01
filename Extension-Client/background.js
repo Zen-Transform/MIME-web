@@ -99,8 +99,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           cangjieEnabled: await getStorageValue("cangjieEnabled"),
           englishEnabled: await getStorageValue("englishEnabled"),
           pinyinEnabled: await getStorageValue("pinyinEnabled"),
+          japaneseEnabled: await getStorageValue("japaneseEnabled"),
         };
-        console.log(config)
+        console.log(config);
         fetch("http://localhost:5000/update_config", {
           method: "POST",
           headers: {

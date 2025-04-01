@@ -6,7 +6,6 @@ app = Flask(__name__)
 
 my_key_event_handler = KeyEventHandler(verbose_mode=True)
 my_key_event_handler.set_activation_status("special", False)
-my_key_event_handler.set_activation_status("japanese", False)
 
 
 @app.route("/handle_key", methods=["POST"])
@@ -68,6 +67,10 @@ def process_update_config():
     my_key_event_handler.set_activation_status("english", config.get("englishEnabled"))
     my_key_event_handler.set_activation_status("cangjie", config.get("cangjieEnabled"))
     my_key_event_handler.set_activation_status("pinyin", config.get("pinyinEnabled"))
+    my_key_event_handler.set_activation_status(
+        "japanese", config.get("japaneseEnabled")
+    )
+
     print("success update config")
     return jsonify({"success": "Config Update successfully"})
 

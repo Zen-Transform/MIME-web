@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const cangjieSwitch = document.getElementById("cangjieSwitch");
   const englishSwitch = document.getElementById("englishSwitch");
   const pinyinSwitch = document.getElementById("pinyinSwitch");
+  const japaneseSwitch = document.getElementById("japaneseSwitch");
 
   const saveButton = document.getElementById("saveSettings");
 
@@ -56,6 +57,9 @@ document.addEventListener("DOMContentLoaded", function () {
   chrome.storage.sync.get(["pinyinEnabled"], function (result) {
     pinyinSwitch.checked = result.pinyinEnabled || false;
   });
+  chrome.storage.sync.get(["japaneseEnabled"], function (result) {
+    japaneseSwitch.checked = result.japaneseEnabled || false;
+  });
 
   // Save settings when save button is clicked
   saveButton.addEventListener("click", function () {
@@ -63,6 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const isCangjieEnabled = cangjieSwitch.checked;
     const isEnglishEnabled = englishSwitch.checked;
     const isPinyinEnabled = pinyinSwitch.checked;
+    const isJapaneseEnabled = japaneseSwitch.checked;
 
     // Save to Chrome storage
     chrome.storage.sync.set(
@@ -71,6 +76,7 @@ document.addEventListener("DOMContentLoaded", function () {
         cangjieEnabled: isCangjieEnabled,
         englishEnabled: isEnglishEnabled,
         pinyinEnabled: isPinyinEnabled,
+        japaneseEnabled: isJapaneseEnabled,
       },
       function () {
         // Send message to background.js
